@@ -30,7 +30,7 @@ def get_sample_sound():
         input_file_entry.insert(0, file_path)
 
         output_file_entry.delete(0, tk.END)
-        output_file_entry.insert(0, file_path)
+        output_file_entry.insert(0, output_file_path)
 
 
 def process_audio():
