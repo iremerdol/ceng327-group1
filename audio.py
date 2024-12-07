@@ -23,10 +23,15 @@ def browse_output_file():
 
 def get_sample_sound():
     file_path = "src/sampleSound.mp3"
+    output_file_path = "src/output.mp3"
 
-    if file_path:
+    if file_path and output_file_path:
         input_file_entry.delete(0, tk.END)
         input_file_entry.insert(0, file_path)
+
+        output_file_entry.delete(0, tk.END)
+        output_file_entry.insert(0, file_path)
+
 
 def process_audio():
 
