@@ -21,7 +21,21 @@ def browse_output_file():
         output_file_entry.delete(0, tk.END)
         output_file_entry.insert(0, file_path)
 
+def get_sample_sound():
+    file_path = "src/sampleSound.mp3"
+    output_file_path = "src/output.mp3"
+
+    if file_path and output_file_path:
+        input_file_entry.delete(0, tk.END)
+        input_file_entry.insert(0, file_path)
+
+        output_file_entry.delete(0, tk.END)
+        output_file_entry.insert(0, file_path)
+
+
 def process_audio():
+
+    # Get input and output files from user
     input_file = input_file_entry.get()
     output_file = output_file_entry.get()
     gains = [sliders[i].get() for i in range(10)]
@@ -48,7 +62,10 @@ def process_audio():
         
         # Export the modified audio
         audio.export(output_file, format="mp3")
-        messagebox.showinfo("Success", f"Audio saved to {output_file}")
+        messagebox.showinfo("Success", f"Audio saved to {output_file_entry.get()}")
+
+        # Close the application window if success
+        root.destroy()
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {e}")
 
@@ -65,6 +82,10 @@ input_file_entry.pack(pady=5)
 
 browse_input_button = tk.Button(root, text="Browse", command=browse_input_file)
 browse_input_button.pack(pady=5)
+
+# Get sample sound from src file
+sample_button = tk.Button(root, text="Get Sample Sound", command=get_sample_sound)
+sample_button.pack(pady=5)
 
 # Equalizer Sliders
 slider_frame = tk.Frame(root)
