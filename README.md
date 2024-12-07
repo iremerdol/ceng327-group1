@@ -17,7 +17,4 @@ also browse for the output file for when the output is created
 -The Sample Sound button now cycles through three sample sounds each time it is pressed.
 -The processed sounds are saved in the Outputs folder.
 
-![Screenshot](src/ScreenShot1.png)
-![Screenshot](src/ScreenShot2.png)
-![Screenshot](src/ScreenShot3.png)
-![Screenshot](src/ScreenShot4.png)
+
