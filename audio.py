@@ -1,22 +1,17 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from pydub import AudioSegment
-from tkinter.ttk import Progressbar
+from tkinter import ttk
 import threading
 import os
 
 def show_progress_bar():
-    progress_label = tk.Label(root, text="Processing, please wait...")
-    progress_label.pack(pady=10)
-    progress = Progressbar(root, mode='indeterminate', length=200)
-    progress.pack(pady=10)
-    progress.start()
-    return progress, progress_label
+    loading_bar.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+    loading_bar.start()
 
-def hide_progress_bar(progress, progress_label):
-    progress.stop()
-    progress.pack_forget()
-    progress_label.pack_forget()
+def hide_progress_bar():
+    loading_bar.stop()
+    loading_bar.place_forget()
 
 def disable_controls():
     # Disable buttons and sliders
@@ -37,16 +32,19 @@ def enable_controls():
     sample_button.config(state="normal")
 
 def process_audio_with_progress():
-    progress, progress_label = show_progress_bar()  # Show action bar
     disable_controls()  # Disable controls during process
+    show_progress_bar()  # Show the loading bar
 
     def process_audio_thread():
         try:
             process_audio()  
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {e}")
         finally:
-            hide_progress_bar(progress, progress_label)  
+            hide_progress_bar()  # Hide the loading bar
+            enable_controls()  # Re-enable controls after processing
 
-    threading.Thread(target=process_audio_thread).start()
+    threading.Thread(target=process_audio_thread, daemon=True).start()
 
 def browse_input_file():
     file_path = filedialog.askopenfilename(
@@ -136,16 +134,9 @@ def process_audio():
         # Export the modified audio
         audio.export(output_file, format="mp3")
 
-        # Hide GUI
-        root.withdraw()
-        
-        messagebox.showinfo("Success", f"Audio saved to {output_file_entry.get()}")
-
-        # Close the application window if success
-        root.destroy()
+        messagebox.showinfo("Success", f"Audio saved to {output_file}")
 
     except Exception as e:
-        root.destroy()  # Also close the GUI in case of error
         messagebox.showerror("Error", f"An error occurred: {e}")
 
 # Create the main application window
@@ -214,12 +205,13 @@ output_file_entry.pack(pady=5)
 browse_output_button = tk.Button(root, text="Browse", command=browse_output_file)
 browse_output_button.pack(pady=5)
 
-# Process and Save Button
-process_button = tk.Button(root, text="Save", command=process_audio)
-process_button.pack(pady=20)
+# Loading Bar
+loading_bar = ttk.Progressbar(root, mode="indeterminate")
+loading_bar.place_forget()  # Initially hidden
 
-# Bind the new function to the process button
-process_button.config(command=process_audio_with_progress)
+# Process and Save Button
+process_button = tk.Button(root, text="Save", command=process_audio_with_progress)
+process_button.pack(pady=20)
 
 # Start the main event loop
 root.mainloop()
