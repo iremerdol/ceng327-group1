@@ -6,12 +6,13 @@ import threading
 import os
 
 def show_progress_bar():
-    loading_bar.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+    loading_bar.pack()  # Make it visible 
     loading_bar.start()
 
 def hide_progress_bar():
     loading_bar.stop()
-    loading_bar.place_forget()
+    loading_bar.pack_forget()  # Hide
+
 
 def disable_controls():
     # Disable buttons and sliders
@@ -39,6 +40,7 @@ def process_audio_with_progress():
         try:
             process_audio()  
         except Exception as e:
+            hide_progress_bar() # Hide previous progress bar
             messagebox.showerror("Error", f"An error occurred: {e}")
         finally:
             hide_progress_bar()  # Hide the loading bar
@@ -112,6 +114,7 @@ def process_audio():
     gains = [sliders[i].get() for i in range(10)]
 
     if not input_file or not output_file:
+        hide_progress_bar() # Hide progress bar and show error message
         messagebox.showerror("Error", "Please select both input and output files.")
         return
 
@@ -133,10 +136,12 @@ def process_audio():
         
         # Export the modified audio
         audio.export(output_file, format="mp3")
+        hide_progress_bar() # Hide progress bar and show success message
 
         messagebox.showinfo("Success", f"Audio saved to {output_file}")
 
     except Exception as e:
+        hide_progress_bar() # Hide progress bar and show error message in case of error
         messagebox.showerror("Error", f"An error occurred: {e}")
 
 # Create the main application window
@@ -205,13 +210,17 @@ output_file_entry.pack(pady=5)
 browse_output_button = tk.Button(root, text="Browse", command=browse_output_file)
 browse_output_button.pack(pady=5)
 
-# Loading Bar
-loading_bar = ttk.Progressbar(root, mode="indeterminate")
-loading_bar.place_forget()  # Initially hidden
-
 # Process and Save Button
 process_button = tk.Button(root, text="Save", command=process_audio_with_progress)
 process_button.pack(pady=20)
+
+# Create a fixed frame for progress bar 
+progress_frame = tk.Frame(root)
+progress_frame.pack(fill=tk.X, pady=5)  # Pin it just below the save button
+
+loading_bar = ttk.Progressbar(progress_frame, mode="indeterminate", length=250)
+loading_bar.pack(pady=5)  # Stays fixed in the frame
+loading_bar.pack_forget()  # Invisible at first
 
 # Start the main event loop
 root.mainloop()
