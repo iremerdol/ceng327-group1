@@ -23,6 +23,7 @@ def disable_controls():
     browse_input_button.config(state="disabled")
     browse_output_button.config(state="disabled")
     sample_button.config(state="disabled")
+    format_menu.config(state="disabled")
 
 def enable_controls():
     # Enable buttons and sliders
@@ -32,6 +33,7 @@ def enable_controls():
     browse_input_button.config(state="normal")
     browse_output_button.config(state="normal")
     sample_button.config(state="normal")
+    format_menu.config(state="normal")
 
 def process_audio_with_progress():
     disable_controls()  # Disable controls during process
