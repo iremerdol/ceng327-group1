@@ -4,6 +4,8 @@ from pydub import AudioSegment
 from tkinter import ttk
 import threading
 import os
+from pydub import AudioSegment
+from pydub.utils import which
 
 def show_progress_bar():
     loading_bar.pack()  # Make it visible 
@@ -13,7 +15,6 @@ def hide_progress_bar():
     loading_bar.stop()
     loading_bar.pack_forget()  # Hide
 
-
 def disable_controls():
     # Disable buttons and sliders
     for slider in sliders:
@@ -22,6 +23,7 @@ def disable_controls():
     browse_input_button.config(state="disabled")
     browse_output_button.config(state="disabled")
     sample_button.config(state="disabled")
+    format_menu.config(state="disabled")
 
 def enable_controls():
     # Enable buttons and sliders
@@ -31,6 +33,7 @@ def enable_controls():
     browse_input_button.config(state="normal")
     browse_output_button.config(state="normal")
     sample_button.config(state="normal")
+    format_menu.config(state="normal")
 
 def process_audio_with_progress():
     disable_controls()  # Disable controls during process
@@ -61,8 +64,8 @@ def browse_input_file():
 def browse_output_file():
     file_path = filedialog.asksaveasfilename(
         title="Select Output File Location",
-        defaultextension=".mp3",
-        filetypes=[("MP3 Files", "*.mp3")]
+        defaultextension=f".{file_format.get()}",
+        filetypes=[(f"{file_format.get().upper()} Files", f"*{file_format.get()}")]
     )
     if file_path:
         output_file_entry.delete(0, tk.END)
@@ -70,7 +73,7 @@ def browse_output_file():
 
 # Get list of audio files in src folder
 def get_sample_files():
-    sample_files = [f for f in os.listdir("src") if f.endswith(('.mp3', '.wav', '.flac', '.ogg'))]
+    sample_files = [f for f in os.listdir("src") if f.endswith(f".{file_format.get()}")]
     return sample_files
 
 def get_sample_sound():
@@ -93,8 +96,11 @@ def get_sample_sound():
         input_file_entry.delete(0, tk.END)
         input_file_entry.insert(0, file_path)
 
+        # Get the base name of the input file (without the extension)
+        input_filename_without_extension = os.path.splitext(current_sample_file)[0]
+
         # Save output file to 'Outputs' folder
-        output_file_name = f"sampleSound{current_sample_index + 1}Output.mp3"
+        output_file_name = f"{input_filename_without_extension}_output{file_format.get()}" 
         output_file_path = os.path.join(output_dir, output_file_name)
         
         output_file_entry.delete(0, tk.END)
@@ -105,12 +111,26 @@ def get_sample_sound():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
-
+AudioSegment.converter = which("ffmpeg")
 def process_audio():
+
+    # Get selected file format
+    selected_format = file_format.get()[1:]  
 
     # Get input and output files from user
     input_file = input_file_entry.get()
     output_file = output_file_entry.get()
+
+    # Change the extension of the output file according to the selected format
+    if selected_format and not output_file.endswith(selected_format):
+        output_file = os.path.splitext(output_file)[0] + f".{selected_format}"
+
+    # FFmpeg supported format control
+    if selected_format not in ["mp3", "wav", "flac", "ogg"]:
+        messagebox.showerror("Error", f"Unsupported file format: {selected_format}")
+        return
+
+    # Equalizer slider değerlerini al
     gains = [sliders[i].get() for i in range(10)]
 
     if not input_file or not output_file:
@@ -135,7 +155,7 @@ def process_audio():
             audio = audio.overlay(band.apply_gain(gains[i]))
         
         # Export the modified audio
-        audio.export(output_file, format="mp3")
+        audio.export(output_file, format=selected_format)
         hide_progress_bar() # Hide progress bar and show success message
 
         messagebox.showinfo("Success", f"Audio saved to {output_file}")
@@ -209,6 +229,33 @@ output_file_entry.pack(pady=5)
 
 browse_output_button = tk.Button(root, text="Browse", command=browse_output_file)
 browse_output_button.pack(pady=5)
+
+# A variable for file formats
+file_format = tk.StringVar()
+file_format.set(".mp3")  # Default format
+
+# Function to update the output file extension
+def update_output_extension(*args):
+    current_extension = file_format.get()  # Get the selected file format
+    output_file = output_file_entry.get()  # Get the current output file path
+
+    # Update the output file extension if it exists
+    if output_file:
+        output_file_base = os.path.splitext(output_file)[0]
+        new_output_file = f"{output_file_base}{current_extension}"
+        output_file_entry.delete(0, tk.END)
+        output_file_entry.insert(0, new_output_file)
+
+# Attach trace to file_format variable
+file_format.trace_add("write", update_output_extension)
+
+# Save As Label
+save_as_label = tk.Label(root, text="Save As:")
+save_as_label.pack(pady=5)
+
+# Dropdown menu 
+format_menu = tk.OptionMenu(root, file_format, ".mp3", ".wav", ".flac", ".ogg")
+format_menu.pack(pady=5)
 
 # Process and Save Button
 process_button = tk.Button(root, text="Save", command=process_audio_with_progress)

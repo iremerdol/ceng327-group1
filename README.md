@@ -14,5 +14,7 @@ A progress bar has been implemented to track the progress during the audio proce
 Additionally, two new sounds have been added to the sample collection.
 The Sample Sound button now cycles through three sample sounds each time it is pressed.
 
+Added support for selecting and handling multiple audio formats
+
 
 
