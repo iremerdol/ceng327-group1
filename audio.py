@@ -1,15 +1,19 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, PhotoImage
-from pydub import AudioSegment
 from tkinter import ttk
 import threading
 import os
 from pydub import AudioSegment
 from pydub.utils import which
+from pygame import mixer
+
+# Initialize pygame mixer
+mixer.init()
 
 # Global variables to store the original and processed audio
 original_audio = None
 processed_audio = None
+current_sound = None  # To keep track of the current playing sound
 
 def show_progress_bar():
     loading_bar.pack()  # Make it visible 
@@ -46,7 +50,9 @@ def process_audio_with_progress():
 
     def process_audio_thread():
         try:
-            process_audio()  
+            process_audio()
+            playback_frame.pack(pady=10)
+            save_button.pack(pady=10)
         except Exception as e:
             hide_progress_bar() # Hide previous progress bar
             messagebox.showerror("Error", f"An error occurred: {e}")
@@ -196,14 +202,63 @@ def export_audio():
         hide_progress_bar()  # Hide progress bar and show error message
         messagebox.showerror("Error", f"Failed to export audio: {str(e)}")
 
+# Function to convert AudioSegment to pygame mixer Sound
+def audiosegment_to_sound(audio):
+    # Convert AudioSegment to raw PCM data
+    raw_data = audio.raw_data
+
+    # Create a pygame Sound object from the raw data
+    sound = mixer.Sound(buffer=raw_data)
+    return sound
+
+# Function to play audio (original or processed)
+def play_audio(audio):
+    global current_sound
+
+    if audio is None:
+        messagebox.showerror("Error", "No audio to play.")
+        return
+
+    # Stop any currently playing audio
+    stop_audio()
+
+    try:
+        # Convert the audio to pygame mixer Sound
+        current_sound = audiosegment_to_sound(audio)
+
+        # Play the sound in a separate thread to keep the UI responsive
+        def play_thread():
+            current_sound.play()
+
+        threading.Thread(target=play_thread, daemon=True).start()
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to play audio: {str(e)}")
+
+# Function to stop audio playback
+def stop_audio():
+    global current_sound
+    if current_sound is not None:
+        current_sound.stop()
+        current_sound = None
+
+# Function to reset all sliders to 0
+def reset_sliders():
+    for slider in sliders:
+        slider.set(0)
+
 def go_to_page2():
     page1.pack_forget() # hide page 1
     page2.pack(fill="both",expand=True) # show page 2
 
 def go_to_page1():
-    global original_audio,processed_audio
-    original_audio,processed_audio = None,None # resets audio files
-    page2.pack_forget() # hide page 2
+    global original_audio,processed_audio,current_sound
+    stop_audio() # stops current audio
+    reset_sliders() # resets sliders
+    original_audio,processed_audio,current_sound = None,None,None # resets audio files
+
+    playback_frame.pack_forget()# hide page 2
+    page2.pack_forget()
+
     page1.pack(fill="both",expand=True) # show page 1
 
 
@@ -309,26 +364,58 @@ file_format.trace_add("write", update_output_extension)
 #format_menu = tk.OptionMenu(output_buttons_frame, file_format, ".mp3", ".wav", ".flac", ".ogg")
 #format_menu.pack(side="left",padx=5)
 
+# Reset Slider Button
+reset_sliders_button = tk.Button(button_frame_for_page2, text="Reset Sliders", command=reset_sliders)
+#process_button.pack(pady=20)
+
 # Process Button
 process_button = tk.Button(button_frame_for_page2, text="Process", command=process_audio_with_progress)
 #process_button.pack(pady=20)
+
+# Playback Frames
+playback_frame = tk.Frame(page2)
+original_audio_frame = tk.Frame(playback_frame)
+processed_audio_frame = tk.Frame(playback_frame)
+
+# Playback Labels
+original_audio_label = tk.Label(original_audio_frame,text='Original Audio:')
+processed_audio_label = tk.Label(processed_audio_frame,text='Processed Audio:')
+
+# Playback Buttons
+play_button_image = PhotoImage(file='src/ButtonImages/play_button.png')
+play_original_audio_button = tk.Button(original_audio_frame,text='play',command=lambda: play_audio(original_audio),image=play_button_image)
+play_processed_audio_button = tk.Button(processed_audio_frame,text='play',command=lambda: play_audio(processed_audio),image=play_button_image)
+stop_button_image = PhotoImage(file='src/ButtonImages/stop_button.png')
+stop_button_for_original_audio = tk.Button(original_audio_frame,text='stop',command=stop_audio,image=stop_button_image)
+stop_button_for_processed_audio = tk.Button(processed_audio_frame,text='stop',command=stop_audio,image=stop_button_image)
+
+# Reorder Playback Buttons
+original_audio_frame.pack(pady=5)
+original_audio_label.pack(padx = 5,side='left')
+play_original_audio_button.pack(padx = 5,side='left')
+stop_button_for_original_audio.pack(padx = 5,side='left')
+processed_audio_frame.pack(pady=5)
+processed_audio_label.pack(padx = 5,side='left')
+play_processed_audio_button.pack(padx = 5,side='left')
+stop_button_for_processed_audio.pack(pady = 5,side='left')
 
 # Save Button
 save_button = tk.Button(page2, text="Save", command=export_audio)
 #save_button.pack(pady=10)
 
 # Back Button
-button_image = PhotoImage(file='back_button.png')
-back_button = tk.Button(page2,text="back",command=go_to_page1,image=button_image)
+back_button_image = PhotoImage(file='src/ButtonImages/back_button.png')
+back_button = tk.Button(page2,text='back',command=go_to_page1,image=back_button_image)
 
 # Pack all elements for page 2 (to reorder buttons correctly)
 slider_frame.pack(pady=10)
 button_frame_for_page2.pack(pady=10)
+reset_sliders_button.pack(pady=5)
 process_button.pack(pady=10)
 #output_file_label.pack(pady=10)
 #output_file_entry.pack(pady=10)
 #output_buttons_frame.pack(pady=10)
-save_button.pack(pady=10)
+#save_button.pack(pady=10)
 back_button.pack(side="right",padx = 5)
 # Create a fixed frame for progress bar
 progress_frame = tk.Frame(page2)
