@@ -29,6 +29,7 @@ def disable_controls():
     sample_button.config(state="disabled")
     save_button.config(state="disabled")
 
+
 def enable_controls():
     # Enable buttons and sliders
     for slider in sliders:
@@ -38,7 +39,6 @@ def enable_controls():
     #browse_output_button.config(state="normal")
     sample_button.config(state="normal")
     save_button.config(state="normal")
-
 
 def process_audio_with_progress():
     disable_controls()  # Disable controls during process
