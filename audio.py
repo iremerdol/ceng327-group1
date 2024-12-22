@@ -16,7 +16,7 @@ processed_audio = None
 current_sound = None  # To keep track of the current playing sound
 
 def show_progress_bar():
-    loading_bar.pack()  # Make it visible 
+    loading_bar.pack(pady=5)  # Center the progress bar
     loading_bar.start()
 
 def hide_progress_bar():
@@ -29,10 +29,8 @@ def disable_controls():
         slider.config(state="disabled")
     process_button.config(state="disabled")
     browse_input_button.config(state="disabled")
-    #browse_output_button.config(state="disabled")
     sample_button.config(state="disabled")
     save_button.config(state="disabled")
-
 
 def enable_controls():
     # Enable buttons and sliders
@@ -40,7 +38,6 @@ def enable_controls():
         slider.config(state="normal")
     process_button.config(state="normal")
     browse_input_button.config(state="normal")
-    #browse_output_button.config(state="normal")
     sample_button.config(state="normal")
     save_button.config(state="normal")
 
@@ -52,9 +49,9 @@ def process_audio_with_progress():
         try:
             process_audio()
             playback_frame.pack(pady=10)
-            save_button.pack(pady=10)
+            save_button.pack(pady=5)  # Adjust padding for save button
         except Exception as e:
-            hide_progress_bar() # Hide previous progress bar
+            hide_progress_bar()  # Hide previous progress bar
             messagebox.showerror("Error", f"An error occurred: {e}")
         finally:
             hide_progress_bar()  # Hide the loading bar
@@ -90,13 +87,12 @@ def browse_output_file():
         output_file_entry.delete(0, tk.END)
         output_file_entry.insert(0, file_path)
 
-# Get list of audio files in src folder
 def get_sample_files():
     sample_files = [f for f in os.listdir("src") if f.endswith(f".{file_format.get()}")]
     return sample_files
 
 def get_sample_sound():
-    global current_sample_index,original_audio
+    global current_sample_index, original_audio
 
     if not sample_files:
         messagebox.showerror("Error", "No sample files found.")
@@ -122,7 +118,7 @@ def get_sample_sound():
         input_filename_without_extension = os.path.splitext(current_sample_file)[0]
 
         # Save output file to 'Outputs' folder
-        output_file_name = f"{input_filename_without_extension}_output{file_format.get()}" 
+        output_file_name = f"{input_filename_without_extension}_output{file_format.get()}"
         output_file_path = os.path.join(output_dir, output_file_name)
         
         output_file_entry.delete(0, tk.END)
@@ -186,7 +182,7 @@ def export_audio():
     output_file = filedialog.asksaveasfilename(
         title="Select Output File Location",
         defaultextension=".mp3",
-        filetypes=[("MP3 Files", "*.mp3"), ("WAV Files", "*.wav"), ("FLAC Files", "*.flac"), ("OGG Files", "*.ogg")]
+        filetypes=[("MP3 Files", ".mp3"), ("WAV Files", ".wav"), ("FLAC Files", ".flac"), ("OGG Files", ".ogg")]
     )
 
     # Check if the user cancelled the save dialog
@@ -280,7 +276,7 @@ if not os.path.exists(sample_dir):
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
-sample_files = [f for f in os.listdir(sample_dir) if f.endswith(('.mp3', '.wav', '.flac', '.ogg'))]  
+sample_files = [f for f in os.listdir(sample_dir) if f.endswith((".mp3", ".wav", ".flac", ".ogg"))]  
 current_sample_index = 0 
 
 
@@ -370,7 +366,10 @@ reset_sliders_button = tk.Button(button_frame_for_page2, text="Reset Sliders", c
 
 # Process Button
 process_button = tk.Button(button_frame_for_page2, text="Process", command=process_audio_with_progress)
-#process_button.pack(pady=20)
+process_button.pack(pady=10)
+
+# Save Button
+save_button = tk.Button(page2, text="Save", command=export_audio)
 
 # Playback Frames
 playback_frame = tk.Frame(page2)
@@ -391,17 +390,13 @@ stop_button_for_processed_audio = tk.Button(processed_audio_frame,text='stop',co
 
 # Reorder Playback Buttons
 original_audio_frame.pack(pady=5)
-original_audio_label.pack(padx = 5,side='left')
-play_original_audio_button.pack(padx = 5,side='left')
-stop_button_for_original_audio.pack(padx = 5,side='left')
+original_audio_label.pack(padx = 5,side='top')
+play_original_audio_button.pack(pady=5)
+stop_button_for_original_audio.pack(pady=5)
 processed_audio_frame.pack(pady=5)
-processed_audio_label.pack(padx = 5,side='left')
-play_processed_audio_button.pack(padx = 5,side='left')
-stop_button_for_processed_audio.pack(pady = 5,side='left')
-
-# Save Button
-save_button = tk.Button(page2, text="Save", command=export_audio)
-#save_button.pack(pady=10)
+processed_audio_label.pack(padx = 5,side='top')
+play_processed_audio_button.pack(pady=5)
+stop_button_for_processed_audio.pack(pady=5)
 
 # Back Button
 back_button_image = PhotoImage(file='src/ButtonImages/back_button.png')
@@ -412,11 +407,10 @@ slider_frame.pack(pady=10)
 button_frame_for_page2.pack(pady=10)
 reset_sliders_button.pack(pady=5)
 process_button.pack(pady=10)
-#output_file_label.pack(pady=10)
-#output_file_entry.pack(pady=10)
-#output_buttons_frame.pack(pady=10)
-#save_button.pack(pady=10)
+save_button.pack(pady=10)
+playback_frame.pack(pady=10)
 back_button.pack(side="right",padx = 5)
+
 # Create a fixed frame for progress bar
 progress_frame = tk.Frame(page2)
 progress_frame.pack(fill=tk.X, pady=5)  # Pin it just below the save button
@@ -428,5 +422,5 @@ loading_bar.pack_forget()  # Invisible at first
 # Show page 1 initially
 page1.pack(fill="both", expand=True)
 
-# Start the main event loop
+# Start the main event loop  
 root.mainloop()
