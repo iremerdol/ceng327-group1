@@ -320,6 +320,46 @@ for i, label in enumerate(labels):
     slider.grid(row=1, column=i, padx=5)
     sliders.append(slider)
 
+# Output File Selector
+
+#output_buttons_frame = tk.Frame(page2)
+
+#output_file_label = tk.Label(button_frame_for_page2, text="Output File:")
+#output_file_label.pack(pady=5)
+
+output_file_entry = tk.Entry(button_frame_for_page2, width=50)
+#output_file_entry.pack(pady=5)
+
+#browse_output_button = tk.Button(output_buttons_frame, text="Browse", command=browse_output_file)
+#browse_output_button.pack(side="left",padx=30)
+
+# A variable for file formats
+file_format = tk.StringVar()
+file_format.set(".mp3")  # Default format
+
+# Function to update the output file extension
+def update_output_extension(*args):
+    current_extension = file_format.get()  # Get the selected file format
+    output_file = output_file_entry.get()  # Get the current output file path
+
+    # Update the output file extension if it exists
+    if output_file:
+        output_file_base = os.path.splitext(output_file)[0]
+        new_output_file = f"{output_file_base}{current_extension}"
+        output_file_entry.delete(0, tk.END)
+        output_file_entry.insert(0, new_output_file)
+
+# Attach trace to file_format variable
+file_format.trace_add("write", update_output_extension)
+
+# Save As Label
+#save_as_label = tk.Label(output_buttons_frame, text="Save As:")
+#save_as_label.pack(side="left",padx=5)
+
+# Dropdown menu 
+#format_menu = tk.OptionMenu(output_buttons_frame, file_format, ".mp3", ".wav", ".flac", ".ogg")
+#format_menu.pack(side="left",padx=5)
+
 # Reset Slider Button
 reset_sliders_button = tk.Button(button_frame_for_page2, text="Reset Sliders", command=reset_sliders)
 #process_button.pack(pady=20)
