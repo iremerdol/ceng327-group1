@@ -142,6 +142,13 @@ def process_audio():
 
     disable_controls()
 
+    if not any(slider.get() for slider in sliders):
+        hide_progress_bar()
+        processed_audio = original_audio
+        messagebox.showinfo("Success", f"Audio is processed successfully")
+        enable_controls()
+        return
+        
     # Obtain slider values
     gains = [sliders[i].get() for i in range(10)]
 
