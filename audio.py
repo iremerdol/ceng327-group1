@@ -6,6 +6,9 @@ import os
 from pydub import AudioSegment
 from pydub.utils import which
 from pygame import mixer
+from scipy.fft import fft, fftfreq, ifft
+import numpy as np
+import matplotlib.pyplot as plt
 
 # Initialize pygame mixer
 mixer.init()
@@ -14,6 +17,38 @@ mixer.init()
 original_audio = None
 processed_audio = None
 current_sound = None  # To keep track of the current playing sound
+
+def analyze_audio_frequency():
+    global original_audio, processed_audio
+
+    if original_audio is None:
+        messagebox.showerror("Error", "No audio loaded. Please select an audio file first.")
+        return
+    
+    if processed_audio is None:
+        processed_audio = original_audio
+
+    # Convert the original audio to numpy array
+    samples = np.array(processed_audio.get_array_of_samples())
+    sample_rate = processed_audio.frame_rate
+
+    # Perform Fourier Transform
+    N = len(samples)
+    fft_values = fft(samples)
+    frequencies = fftfreq(N, d=1/sample_rate)
+
+    # Take the magnitude of the FFT and only plot the positive frequencies
+    magnitude = np.abs(fft_values)[:N // 2]
+    frequencies = frequencies[:N // 2]
+
+    # Plot the frequency domain representation
+    plt.figure(figsize=(10, 5))
+    plt.plot(frequencies, magnitude)
+    plt.title("Frequency Domain Representation")
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Amplitude")
+    plt.grid()
+    plt.show()
 
 def show_progress_bar():
     loading_bar.pack(pady=5)  # Center the progress bar
@@ -132,6 +167,7 @@ def get_sample_sound():
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
 AudioSegment.converter = which("ffmpeg")
+
 def process_audio():
     global original_audio, processed_audio
 
@@ -141,43 +177,60 @@ def process_audio():
         return
 
     disable_controls()
+    show_progress_bar()
 
-    if not any(slider.get() for slider in sliders):
-        hide_progress_bar()
-        processed_audio = original_audio
-        messagebox.showinfo("Success", f"Audio is processed successfully")
-        enable_controls()
-        return
-        
     # Obtain slider values
     gains = [sliders[i].get() for i in range(10)]
 
     try:
-        # Create a copy of the original audio to process
-        audio = original_audio
-        
-        # Define frequency ranges for the 10 bands
+        # Convert the original audio to a numpy array
+        samples = np.array(original_audio.get_array_of_samples())
+        sample_rate = original_audio.frame_rate
+
+        # Perform Fourier Transform
+        N = len(samples)
+        fft_values = fft(samples)
+
+        # Define frequency ranges for equalization
         freq_ranges = [
             (20, 60), (60, 125), (125, 250), (250, 500),
             (500, 1000), (1000, 2000), (2000, 4000),
             (4000, 8000), (8000, 16000), (16000, 20000)
         ]
 
-        # Apply gains to each band
+        # Apply gains to the frequency ranges
+        freqs = fftfreq(N, d=1/sample_rate)
+        fft_modified = np.copy(fft_values)
         for i, (low, high) in enumerate(freq_ranges):
-            band = audio.low_pass_filter(high).high_pass_filter(low)
-            audio = audio.overlay(band.apply_gain(gains[i]))
+            band_mask = (freqs >= low) & (freqs <= high)
+            attenuation_factor = 10**(gains[i] / 100)  # Convert dB to linear scale
+            if gains[i] < 0:
+                attenuation_factor /= 1000
+            fft_modified[band_mask] *= attenuation_factor
 
-        # Store the processed audio
-        processed_audio = audio
+            # Apply to symmetric negative frequencies
+            band_mask_negative = (freqs <= -low) & (freqs >= -high)
+            fft_modified[band_mask_negative] *= (attenuation_factor * -10)
 
-        hide_progress_bar() # Hide progress bar and show success message
-        messagebox.showinfo("Success", f"Audio is processed successfully")
+        # Perform Inverse Fourier Transform
+        modified_samples = np.real(ifft(fft_modified)).astype(samples.dtype)
+
+        # Create a new AudioSegment for the processed audio
+        processed_audio = AudioSegment(
+            modified_samples.tobytes(),
+            frame_rate=sample_rate,
+            sample_width=original_audio.sample_width,
+            channels=original_audio.channels
+        )
+
+        hide_progress_bar()
+        messagebox.showinfo("Success", "Audio processed successfully!")
         enable_controls()
 
     except Exception as e:
-        hide_progress_bar() # Hide progress bar and show error message in case of error
+        hide_progress_bar()
         messagebox.showerror("Error", f"An error occurred: {e}")
+        enable_controls()
 
 def export_audio():
     global processed_audio
@@ -366,6 +419,10 @@ file_format.trace_add("write", update_output_extension)
 # Dropdown menu 
 #format_menu = tk.OptionMenu(output_buttons_frame, file_format, ".mp3", ".wav", ".flac", ".ogg")
 #format_menu.pack(side="left",padx=5)
+
+# Add a new button to trigger Fourier Transform analysis
+analyze_button = tk.Button(page2, text="Analyze Frequency", command=analyze_audio_frequency)
+analyze_button.pack(pady=10)
 
 # Reset Slider Button
 reset_sliders_button = tk.Button(button_frame_for_page2, text="Reset Sliders", command=reset_sliders)
