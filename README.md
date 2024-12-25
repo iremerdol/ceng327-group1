@@ -1,6 +1,16 @@
-in order to run the code install PyDub:
+in order to run the code:
 
-    pip install pydub
+    pip install tkinter numpy scipy matplotlib pydub pygame
+    
+for pydub to work need to install ffmpeg:
+
+Windows:
+1) Download FFmpeg from https://ffmpeg.org/download.html
+2) Extract the FFmpeg files and note the location of the bin folder (e.g., C:\ffmpeg\bin).
+3) Add the bin folder to your system's PATH:
+  --Open "System Properties" → "Advanced" → "Environment Variables."
+  --Find the Path variable, click "Edit," and add the path to the bin folder.
+4) Test FFmpeg installation by running ffmpeg -version in the command prompt.
 
 run the code:
 
@@ -9,12 +19,3 @@ run the code:
 browse for the input file (.mp3, .wav, .flac, .ogg)
 
 also browse for the output file for when the output is created
-
-A progress bar has been implemented to track the progress during the audio processing.
-Additionally, two new sounds have been added to the sample collection.
-The Sample Sound button now cycles through three sample sounds each time it is pressed.
-
-Added support for selecting and handling multiple audio formats
-
-
-
